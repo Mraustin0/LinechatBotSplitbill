@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  line_user_id     String   @id
+  display_name     String
+  promptpay_number String?
+  shares           Share[]
+  bills_created    Bill[]   @relation("BillCreator")
+  created_at       DateTime @default(now())
+}
+
+model Group {
+  id            Int      @id @default(autoincrement())
+  line_group_id String   @unique
+  name          String
+  bills         Bill[]
+  created_at    DateTime @default(now())
+}
+
+model Bill {
+  id         Int      @id @default(autoincrement())
+  group_id   Int
+  title      String
+  total      Float
+  created_by String
+  status     String   @default("open") // open, collecting
+  group      Group    @relation(fields: [group_id], references: [id])
+  creator    User     @relation("BillCreator", fields: [created_by], references: [line_user_id])
+  items      Item[]
+  shares     Share[]
+  created_at DateTime @default(now())
+}
+
+model Item {
+  id      Int    @id @default(autoincrement())
+  bill_id Int
+  name    String
+  price   Float
+  bill    Bill   @relation(fields: [bill_id], references: [id])
+}
+
+model Share {
+  id      Int     @id @default(autoincrement())
+  bill_id Int
+  user_id String
+  amount  Float
+  paid    Boolean @default(false)
+  bill    Bill    @relation(fields: [bill_id], references: [id])
+  user    User    @relation(fields: [user_id], references: [line_user_id])
+}
